@@ -12,7 +12,17 @@ import Photos
 class ViewController: UIViewController{
 
 	
+	
 	@IBOutlet weak var collectionView: UICollectionView!
+	
+	@IBOutlet weak var datedisplay: UILabel!
+
+	//日付変更時に格納するメソッド
+	@IBAction func Datepicker(_ sender: UIDatePicker) {
+		let formatter = DateFormatter()
+		formatter.dateFormat = "yyy/MM/dd"
+		datedisplay.text = formatter.string(from: sender.date)
+	}
 	
 	
 	var photoAssets: Array! = [PHAsset]()
@@ -26,6 +36,8 @@ class ViewController: UIViewController{
 	override func didReceiveMemoryWarning() {
 		super.didReceiveMemoryWarning()
 	}
+	
+	
 	
 	fileprivate func setup() {
 		collectionView.dataSource = self
@@ -62,7 +74,7 @@ class ViewController: UIViewController{
 	
 	// カメラロールから全て取得する
 	fileprivate func getAllPhotosInfo() {
-		let assets: PHFetchResult = PHAsset.fetchAssets(with: .image, options: nil)
+		var assets: PHFetchResult = PHAsset.fetchAssets(with: .image, options: nil)
 		assets.enumerateObjects({ [weak self] (asset, index, stop) -> Void in
 			guard let wself = self else {
 				return
@@ -70,7 +82,11 @@ class ViewController: UIViewController{
 			wself.photoAssets.append(asset as PHAsset)
 		})
 		collectionView.reloadData()
+		print("写真は\(assets.count)")
+		
 	}
+	
+	
 	
 	// カメラロールへのアクセスが拒否されている場合のアラート
 	fileprivate func showDeniedAlert() {
@@ -99,8 +115,38 @@ class ViewController: UIViewController{
 			UIApplication.shared.open(url, options: [:], completionHandler: nil)
 		}
 	}
+	
+	
+	//未完成 写真が新しい順にして表示させる。
+	//カメラロールから日付　指定して、取得
+	fileprivate func getselectPhotoInfo(){
+		photoAssets = []
+		// ソート条件を指定
+		var options = PHFetchOptions()
+		options.sortDescriptors = [
+			NSSortDescriptor(key: "creationDate", ascending: false)
+		]
+		
+		var assets: PHFetchResult = PHAsset.fetchAssets(with: .image, options: options)
+		assets.enumerateObjects({ (asset, index, stop) -> Void in
+			self.photoAssets.append(asset as PHAsset)
+		})
+		collectionView.reloadData()
+		//print(photoAssets)
+		
+	}
+
+	//検索実行
+	@IBAction func Searchbutton(_ sender: Any) {
+		getselectPhotoInfo()
+	}
+
+	
+	
+	
 }
 
+//拡張、collectionviewの拡張＞名前はそのままにプロパティやメソッドの追加ができる
 extension ViewController : UICollectionViewDataSource {
 	func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
 		return photoAssets.count
