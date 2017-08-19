@@ -9,6 +9,9 @@
 import UIKit
 import Photos
 
+//検索用　日付格納のため
+var sdate : Date? = Date()
+
 class ViewController: UIViewController{
 
 	
@@ -16,12 +19,15 @@ class ViewController: UIViewController{
 	@IBOutlet weak var collectionView: UICollectionView!
 	
 	@IBOutlet weak var datedisplay: UILabel!
-
+	
 	//日付変更時に格納するメソッド
 	@IBAction func Datepicker(_ sender: UIDatePicker) {
 		let formatter = DateFormatter()
-		formatter.dateFormat = "yyy/MM/dd"
+		formatter.dateFormat = "yyy-MM-dd"
 		datedisplay.text = formatter.string(from: sender.date)
+		sdate = sender.date
+		print(sdate)
+		//print(datedisplay.text)
 	}
 	
 	
@@ -121,13 +127,47 @@ class ViewController: UIViewController{
 	//カメラロールから日付　指定して、取得
 	fileprivate func getselectPhotoInfo(){
 		photoAssets = []
+		/*
 		// ソート条件を指定
 		var options = PHFetchOptions()
 		options.sortDescriptors = [
 			NSSortDescriptor(key: "creationDate", ascending: false)
 		]
+		*/
 		
+		//条件指定 指定した日にちよりも新しい写真を表示する
+		let options = PHFetchOptions()
+		var searchdate:Date = Date()
+		
+		//searchdate = self.datedisplay.text
+		//searchdate = Date(timeIntervalSinceNow: -46*24*60*60);//一ヶ月前
+		searchdate = Date(timeInterval:0, since:sdate!)
+		print(searchdate)
+		options.predicate = NSPredicate(format: "creationDate >= %@", searchdate as CVarArg)
+		options.sortDescriptors = [
+			NSSortDescriptor(key: "creationDate", ascending: false)
+		]
+		
+		/*
+		//条件指定
+		let options = PHFetchOptions()
+		var searchdate:Date = Date()
+		
+		searchdate = Date(timeIntervalSinceNow: -46*24*60*60);//一ヶ月前
+		options.predicate = NSPredicate(format: "creationDate >= %@", searchdate as CVarArg)
+		options.sortDescriptors = [
+		NSSortDescriptor(key: "creationDate", ascending: false)
+		]
+		
+		*/
+
+		//let searchdate = calendar.date(from: self.datedisplay.text)!
+		//options.predicate = NSPredicate(format: "creationDate >= %d", searchdate)
+		
+		//Photos fetchメソッドから返されたアセットまたはコレクションの順序付きリスト検索結果を格納
 		var assets: PHFetchResult = PHAsset.fetchAssets(with: .image, options: options)
+		//print(assets)
+		//asset格納写真をつくる　検索結果から写真情報抜き出ししてる？？
 		assets.enumerateObjects({ (asset, index, stop) -> Void in
 			self.photoAssets.append(asset as PHAsset)
 		})
@@ -135,10 +175,11 @@ class ViewController: UIViewController{
 		//print(photoAssets)
 		
 	}
-
+	
 	//検索実行
-	@IBAction func Searchbutton(_ sender: Any) {
+	@IBAction func Searchbutton(_ sender: Any){
 		getselectPhotoInfo()
+		
 	}
 
 	
