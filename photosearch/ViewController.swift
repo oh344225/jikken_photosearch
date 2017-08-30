@@ -6,11 +6,15 @@
 //  Copyright © 2017年 oshitahayato. All rights reserved.
 //
 
+//ライブラリインポート
 import UIKit
 import Photos
 
+import HealthKit
+
 //検索用　日付格納のため
 var sdate : Date? = Date()
+var pulse : Int? = 60
 
 class ViewController: UIViewController{
 
@@ -20,13 +24,17 @@ class ViewController: UIViewController{
 	
 	@IBOutlet weak var datedisplay: UILabel!
 	
+	//healthkit 心拍使用のために用意
+	var myHealthStore : HKHealthStore!
+
+	
 	//日付変更時に格納するメソッド
 	@IBAction func Datepicker(_ sender: UIDatePicker) {
 		let formatter = DateFormatter()
 		formatter.dateFormat = "yyy-MM-dd"
 		datedisplay.text = formatter.string(from: sender.date)
 		sdate = sender.date
-		print(sdate)
+		//print(sdate)
 		//print(datedisplay.text)
 	}
 	
@@ -35,6 +43,10 @@ class ViewController: UIViewController{
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
+		//Hearlthsotre の作成
+		myHealthStore = HKHealthStore()
+		
+		requestAuthorization()
 		setup()
 		libraryRequestAuthorization()
 	}
@@ -77,6 +89,32 @@ class ViewController: UIViewController{
 			}
 		})
 	}
+	
+	/*
+	ボタンイベント
+	healthkit アクセス申請
+	*/
+	
+	private func requestAuthorization(){
+		
+		// 読み込みを許可する型.
+		// HKCharacteristicTypeIdentifierDateOfBirthは、readしかできない.
+		let typeOfReads = Set(arrayLiteral:
+			HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)!,
+		                      HKCharacteristicType.characteristicType(forIdentifier: HKCharacteristicTypeIdentifier.dateOfBirth)!
+		)
+		
+		//  HealthStoreへのアクセス承認をおこなう.
+		myHealthStore.requestAuthorization(toShare: nil, read: typeOfReads, completion: { (success, error) in
+			if let e = error {
+				print("Error: \(e.localizedDescription)")
+				return
+			}
+			print(success ? "Success!" : " Failure!")
+		})
+	}
+	
+
 	
 	// カメラロールから全て取得する
 	fileprivate func getAllPhotosInfo() {
@@ -126,6 +164,10 @@ class ViewController: UIViewController{
 	//未完成 写真が新しい順にして表示させる。
 	//カメラロールから日付　指定して、取得
 	fileprivate func getselectPhotoInfo(){
+	
+		//心拍呼び出し
+		self.readData()
+		
 		photoAssets = []
 		/*
 		// ソート条件を指定
@@ -135,15 +177,18 @@ class ViewController: UIViewController{
 		]
 		*/
 		
-		//条件指定 指定した日にちよりも新しい写真を表示する
+		//条件指定 指定した日にちの前後１週間の中から取得
 		let options = PHFetchOptions()
-		var searchdate:Date = Date()
-		
+		var searchdateplus:Date = Date()
+		var searchdateminus:Date = Date()
+
 		//searchdate = self.datedisplay.text
 		//searchdate = Date(timeIntervalSinceNow: -46*24*60*60);//一ヶ月前
-		searchdate = Date(timeInterval:0, since:sdate!)
-		print(searchdate)
-		options.predicate = NSPredicate(format: "creationDate >= %@", searchdate as CVarArg)
+		//前後１週間を検索
+		searchdateplus = Date(timeInterval:+7*24*60*60, since:sdate!)
+		searchdateminus = Date(timeInterval:-7*24*60*60, since:sdate!)
+		//print(searchdateplus)
+		options.predicate = NSPredicate(format: "creationDate <= %@ AND creationDate >= %@", searchdateplus  as CVarArg,searchdateminus as CVarArg)
 		options.sortDescriptors = [
 			NSSortDescriptor(key: "creationDate", ascending: false)
 		]
@@ -164,27 +209,135 @@ class ViewController: UIViewController{
 		//let searchdate = calendar.date(from: self.datedisplay.text)!
 		//options.predicate = NSPredicate(format: "creationDate >= %d", searchdate)
 		
+		
+		
 		//Photos fetchメソッドから返されたアセットまたはコレクションの順序付きリスト検索結果を格納
-		var assets: PHFetchResult = PHAsset.fetchAssets(with: .image, options: options)
+		let assets: PHFetchResult = PHAsset.fetchAssets(with: .image, options: options)
 		//print(assets)
 		//asset格納写真をつくる　検索結果から写真情報抜き出ししてる？？
 		assets.enumerateObjects({ (asset, index, stop) -> Void in
-			self.photoAssets.append(asset as PHAsset)
+			
+			//exif読み込み
+			let editOptions = PHContentEditingInputRequestOptions()
+			editOptions.isNetworkAccessAllowed = true
+			
+			asset.requestContentEditingInput(with: editOptions, completionHandler: { (contentEditingInput, _) -> Void in
+				let url = contentEditingInput!.fullSizeImageURL
+				
+				//画像nilの条件処理
+				if let inputImage:CIImage = CoreImage.CIImage(contentsOf: url!){
+					//print("画像:\(inputImage)")
+					let meta:NSDictionary? = inputImage.properties as NSDictionary?
+					//print("exif:\(meta?["{Exif}"] as? NSDictionary)")
+					let exif:NSDictionary? = meta?["{Exif}"] as? NSDictionary
+					let text = exif?.object(forKey: kCGImagePropertyExifUserComment) as! String?
+					
+					//text -> int変換
+					if(text == nil){
+						//print(text)
+					}else{
+						// if, guard などを使って切り分ける
+						if let p = Int(text!){
+							//print(p)
+							if(p >= pulse!){
+								//print(self.photoAssets)
+								self.photoAssets.append(asset as PHAsset)
+								print(self.photoAssets.count)
+								self.collectionView.reloadData()
+							}
+						}
+						else{
+							//print("error")  // --> error
+						}
+					}
+					//////////////////////////
+					//print(text)
+				}else{
+					print("err")
+				}
+				
+				//self.meta = inputImage.properties["{Exif}"] as? NSDictionary
+				
+				})
+			
+			//self.photoAssets.append(asset as PHAsset)
+
 		})
-		collectionView.reloadData()
-		//print(photoAssets)
 		
+		print("写真は\(assets.count)")
+		//print(photoAssets)
+		collectionView.reloadData()
+
 	}
 	
+	//データ読み出し
+	private func readData(){
+		
+		var error: NSError?
+		
+		//取得データ・タイプ生成
+		let typeOfheartrate = HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.heartRate)
+
+		//日付処理
+		let calendar = Calendar.init(identifier: Calendar.Identifier.gregorian)
+		let searchdate = sdate!
+		let startDate = calendar.startOfDay(for: searchdate)
+		let endDate = calendar.date(byAdding: Calendar.Component.day, value: 1, to: startDate)
+		
+		let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
+		// データ読み出し時のオプションを指定(平均値の計算).
+		let statsOptions = HKStatisticsOptions.discreteAverage
+		
+		let staticsQuery = HKStatisticsQuery(quantityType: typeOfheartrate!, quantitySamplePredicate: predicate, options: statsOptions) { (query, result, error) in
+			if let e = error {
+				print("Error: \(e.localizedDescription)")
+				return
+			}
+			guard let ave = result?.averageQuantity() else {
+				print("Error")
+				return
+			}
+			
+			// 取得したサンプルを単位に合わせる.
+			DispatchQueue.main.async {
+				/*
+				//ave = 60.0 / ave
+				//let p = ave.doubleValue(for: <#T##HKUnit#>)
+				print(type(of: ave))
+				print("心拍：\(ave)")
+				*/
+				//心拍int型変換
+				let count:HKUnit = HKUnit.count()
+				let minute: HKUnit = HKUnit.minute()
+				let countPerMinute:HKUnit = count.unitMultiplied(by: minute.reciprocal())
+				
+				let bpm = ave.doubleValue(for: countPerMinute)
+				let intbpm = Int(bpm)
+				pulse = intbpm
+				//print("心拍：\(intbpm)")
+				print(pulse)
+
+			}
+		}
+		// queryを発行.
+		self.myHealthStore.execute(staticsQuery)
+	}
+
+
+
+
+
+
+
 	//検索実行
 	@IBAction func Searchbutton(_ sender: Any){
 		getselectPhotoInfo()
 		
 	}
 
-	
-	
-	
+
+
+
 }
 
 //拡張、collectionviewの拡張＞名前はそのままにプロパティやメソッドの追加ができる

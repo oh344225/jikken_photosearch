@@ -24,6 +24,12 @@ class CameraRollCollectionViewCell: UICollectionViewCell {
 	func setConfigure(assets: PHAsset) {
 		let manager = PHImageManager()
 		
+		//同期オプション（同期処理にするように指定）
+		/*
+		let iOptions = PHImageRequestOptions()
+		iOptions.isSynchronous = true
+		*/
+		
 		manager.requestImage(for: assets,
 		                     targetSize: frame.size,
 		                     contentMode: .aspectFit,
@@ -36,24 +42,34 @@ class CameraRollCollectionViewCell: UICollectionViewCell {
 								wself.photoImageView.image = outImage
 								//print(assets)
 								//print(outImage)
+								//exif読み込み
+								let editOptions = PHContentEditingInputRequestOptions()
+								editOptions.isNetworkAccessAllowed = true
+								
+								assets.requestContentEditingInput(with: editOptions, completionHandler: { (contentEditingInput, _) -> Void in
+									let url = contentEditingInput?.fullSizeImageURL
+									let inputImage:CIImage = CoreImage.CIImage(contentsOf: url!)!
+									//self.meta = inputImage.properties["{Exif}"] as? NSDictionary
+									let meta:NSDictionary? = inputImage.properties as NSDictionary?
+									//print(meta)
+									if((((meta?["{Exif}"]) ) == nil)){
+										print("exif:null error")
+										wself.pulsetext.text = "no pulse"
+									}
+									
+									//exifの型に! ?でnilが含まれるかどうかの宣言が間違っていた
+									//print("exif:\(meta!["{Exif}"] as! NSDictionary)")
+									//print("exif:\(meta?["{Exif}"] as? NSDictionary)")
+									
+									//let exif:NSDictionary? = meta!["{Exif}"] as! NSDictionary
+									//print(exif)
+									
+								})
+
+								
 								
 		})
-		//exif読み込み
-		let editOptions = PHContentEditingInputRequestOptions()
-		editOptions.isNetworkAccessAllowed = true
-		
-		assets.requestContentEditingInput(with: editOptions, completionHandler: { (contentEditingInput, _) -> Void in
-			let url = contentEditingInput?.fullSizeImageURL
-			let inputImage:CIImage = CoreImage.CIImage(contentsOf: url!)!
-			
-			//self.meta = inputImage.properties["{Exif}"] as? NSDictionary
-			let meta = inputImage.properties as NSDictionary?
-			//print("exif:\(meta!["{Exif}"] as! NSDictionary)")
-				//let exif:NSDictionary? = meta!["{Exif}"] as! NSDictionary
-				//print(exif)
-			
-		})
-		//ここまでその処理　exifでエラーが出る。
+				//ここまでその処理　exifでエラーが出る。
 		
 
 		

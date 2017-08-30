@@ -16,6 +16,7 @@
 		4ABE002B1EEFD16A003BE73D /* photosearchUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ABE002A1EEFD16A003BE73D /* photosearchUITests.swift */; };
 		4ABE003A1EEFD18B003BE73D /* Photos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4ABE00391EEFD18B003BE73D /* Photos.framework */; };
 		4ABED8501F0A57D400768CA9 /* CameraRollCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ABED84F1F0A57D400768CA9 /* CameraRollCollectionViewCell.swift */; };
+		4AE028A01F56BF28000A0436 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4AE0289F1F56BF28000A0436 /* HealthKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +52,8 @@
 		4ABE002C1EEFD16A003BE73D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4ABE00391EEFD18B003BE73D /* Photos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Photos.framework; path = System/Library/Frameworks/Photos.framework; sourceTree = SDKROOT; };
 		4ABED84F1F0A57D400768CA9 /* CameraRollCollectionViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraRollCollectionViewCell.swift; sourceTree = "<group>"; };
+		4AE0289E1F56BF1F000A0436 /* photosearch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = photosearch.entitlements; sourceTree = "<group>"; };
+		4AE0289F1F56BF28000A0436 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +62,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4ABE003A1EEFD18B003BE73D /* Photos.framework in Frameworks */,
+				4AE028A01F56BF28000A0436 /* HealthKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -92,6 +96,7 @@
 		4ABE00091EEFD16A003BE73D /* photosearch */ = {
 			isa = PBXGroup;
 			children = (
+				4AE0289E1F56BF1F000A0436 /* photosearch.entitlements */,
 				4ABE000A1EEFD16A003BE73D /* AppDelegate.swift */,
 				4ABE000C1EEFD16A003BE73D /* ViewController.swift */,
 				4ABE000E1EEFD16A003BE73D /* Main.storyboard */,
@@ -124,6 +129,7 @@
 		4ABE00381EEFD18A003BE73D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4AE0289F1F56BF28000A0436 /* HealthKit.framework */,
 				4ABE00391EEFD18B003BE73D /* Photos.framework */,
 			);
 			name = Frameworks;
@@ -210,6 +216,11 @@
 						CreatedOnToolsVersion = 8.3.2;
 						DevelopmentTeam = LP4P63WJX3;
 						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.HealthKit = {
+								enabled = 1;
+							};
+						};
 					};
 					4ABE001A1EEFD16A003BE73D = {
 						CreatedOnToolsVersion = 8.3.2;
@@ -431,6 +442,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = photosearch/photosearch.entitlements;
 				DEVELOPMENT_TEAM = LP4P63WJX3;
 				INFOPLIST_FILE = photosearch/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
@@ -445,6 +457,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = photosearch/photosearch.entitlements;
 				DEVELOPMENT_TEAM = LP4P63WJX3;
 				INFOPLIST_FILE = photosearch/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
