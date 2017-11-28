@@ -12,8 +12,9 @@ import Photos
 class CameraRollCollectionViewCell: UICollectionViewCell {
 	
 	@IBOutlet weak var photoImageView: UIImageView!
-	
-	@IBOutlet weak var pulsetext: UILabel!
+
+	//pulsetet ui
+	//@IBOutlet weak var pulsetext: UILabel!
 	
 	
 	override func awakeFromNib() {
@@ -54,7 +55,7 @@ class CameraRollCollectionViewCell: UICollectionViewCell {
 									//print(meta)
 									if((((meta?["{Exif}"]) ) == nil)){
 										print("exif:null error")
-										wself.pulsetext.text = "no pulse"
+										//wself.pulsetext.text = "no pulse"
 									}
 									
 									//exifの型に! ?でnilが含まれるかどうかの宣言が間違っていた
